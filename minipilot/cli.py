@@ -282,7 +282,7 @@ def main():
     complete_parser.add_argument("--files", nargs="*", help="Limit context to specific files")
     complete_parser.add_argument("--max-tokens", type=int, default=1000, help="Max completion tokens")    
     complete_parser.add_argument("--temperature", type=float, default=0.1, help="Completion temperature")
-    complete_parser.add_argument("--model", default="gpt-4", help="OpenAI model to use")
+    complete_parser.add_argument("--model", default="gpt-4o", help="OpenAI model to use")
     complete_parser.add_argument("--show-context", action="store_true", help="Show retrieved context")
     complete_parser.add_argument("--dry-run", action="store_true", help="Show context without calling OpenAI API")
     complete_parser.set_defaults(func=cmd_complete)

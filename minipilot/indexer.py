@@ -84,7 +84,7 @@ class CodebaseIndexer:
             print(f"WARNING: No chunks created for {relative_path}")
             return False
         
-        print(f"✓ Created {len(chunks)} chunks for {relative_path}")
+        print(f"  Created {len(chunks)} chunks for {relative_path}")
         
         print(f"  → Deleting old data for: {relative_path}")
         self.cache.delete_file_data(relative_path)
@@ -102,7 +102,7 @@ class CodebaseIndexer:
         
         stored_file = self.cache.get_file_metadata(relative_path)
         if stored_file:
-            print(f"  → ✓ File metadata stored successfully")
+            print(f"  →   File metadata stored successfully")
         else:
             print(f"  -> File metadata NOT stored!")
         

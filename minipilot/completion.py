@@ -12,7 +12,7 @@ class CompletionRequest:
     context_files: Optional[List[str]] = None
     max_tokens: int = 1000
     temperature: float = 0.1
-    model: str = "gpt-4"
+    model: str = "gpt-4o"
 
 
 @dataclass
@@ -39,6 +39,14 @@ class CompletionEngine:
         
         self.query_engine = QueryEngine(cache_dir=cache_dir)
         api_key = api_key or os.getenv('OPENAI_API_KEY')
+
+        print("API KEY STATUS:\n\n\n")
+        if api_key:
+            print(f"Using OpenAI API key from environment variable: {api_key[:4]}... (truncated for security)")
+        else:
+            print("No OpenAI API key provided, running in DRY-RUN mode")
+        print("\n\n\nAPI KEY STATUS end")
+              
         
         if dry_run or not api_key:
             self.dry_run = True
@@ -68,9 +76,8 @@ class CompletionEngine:
         
         completion_start = time.time()
         
-        if self.dry_run:
-            # Dry-run mode: show the context that would be sent to OpenAI
-            completion = f"""DRY-RUN MODE - Retrieved Context Preview:
+        # Always show context preview regardless of mode
+        context_preview = f"""RETRIEVED CONTEXT PREVIEW:
 
 === SYSTEM PROMPT ===
 {system_prompt}
@@ -83,13 +90,18 @@ class CompletionEngine:
 - Retrieved {context_data['chunks_used']} code chunks
 - Total context length: {context_data['context_length']} characters
 - Search mode: semantic search
-- Model would be: {request.model}
+- Model: {request.model}
 - Max tokens: {request.max_tokens}
 - Temperature: {request.temperature}
-
-To get actual completion, set OPENAI_API_KEY environment variable"""
+"""
+        
+        print("\n" + "="*80)
+        print(context_preview)
+        print("="*80)
+        
+        if self.dry_run:
+            completion = context_preview + "\n\nDRY-RUN MODE: No API call made"
             total_tokens = None
-            
         else:
             try:
                 response = self.client.chat.completions.create(
@@ -103,8 +115,9 @@ To get actual completion, set OPENAI_API_KEY environment variable"""
                     stream=False
                 )
                 
-                completion = response.choices[0].message.content
+                api_completion = response.choices[0].message.content
                 total_tokens = response.usage.total_tokens if response.usage else None
+                completion = f"API COMPLETION:\n{api_completion}"
                 
             except Exception as e:
                 completion = f"Error generating completion: {str(e)}"
