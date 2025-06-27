@@ -45,7 +45,7 @@ Your Machine (Private)          Cloud (Minimal Exposure)
 | Solution           | Codebase Upload     | Server-Side Processing | Data Retention                                                       | Privacy Level                                                                                                                     |
 | ------------------ | ------------------- | ---------------------- | -------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
 | **GitHub Copilot** | Yes - Full upload   | Yes - Cloud processing | Only temporarily with privacy policy                                 | Requires user to trust provider                                                                                                   |
-| **Cursor**         | Yes - Full upload   | Yes - Cloud processing | Only temporarily in Privacy Mode                                     | Requires user to trust provider                                                                                                   |
+| **Cursor**         | Yes - Full upload   | Yes - Cloud processing | Only temporarily in privacy Mode                                     | Requires user to trust provider                                                                                                   |
 | **Minipilot**      | No - Never uploaded | No - Local only        | No data is EVER in the hands of a third party. Not even temporarily. | The user IS the provider. No third party is ever involved in indexing. User's codebase is NEVER sent to any server for embedding. |
 
 ## Technical Architecture
