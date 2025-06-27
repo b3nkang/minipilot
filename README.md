@@ -48,6 +48,12 @@ Your Machine (Private)          Cloud (Minimal Exposure)
 | **Cursor**         | Yes - Full upload   | Yes - Cloud processing | Only temporarily in privacy Mode                                                         | Requires user to trust provider                                                                                                   |
 | **Minipilot**      | No - Never uploaded | No - Local only        | No data is EVER in the hands of a third party until the LLM query. Not even temporarily. | The user IS the provider. No third party is ever involved in indexing. User's codebase is NEVER sent to any server for embedding. |
 
+## Demo on Sample Codebase
+
+Below is a demo of Minipilot running on the repository for Full Stack at Brown's website, which is a static Astro-based site.
+
+https://github.com/user-attachments/assets/c61d9a02-ebd4-447d-8c48-ef4938975cb6
+
 ## Technical Architecture
 
 ### Core Components
@@ -76,7 +82,7 @@ Your Machine (Private)          Cloud (Minimal Exposure)
 
 ```bash
 # Clone and setup
-git clone https://Github.com/yourusername/minipilot.git
+git clone https://github.com/b3nkang/minipilot.git
 cd minipilot
 pip install -r requirements.txt
 
