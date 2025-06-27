@@ -1,8 +1,8 @@
 # Minipilot: A Maximally Private Copilot
 
-<img width="791" alt="image" src="https://github.com/user-attachments/assets/7c146dc3-dc84-49b6-a658-c5717f22d156" />
+<img width="791" alt="image" src="https://Github.com/user-attachments/assets/7c146dc3-dc84-49b6-a658-c5717f22d156" />
 
-## The Privacy-First Alternative to GitHub Copilot, Cursor, and More
+## The Privacy-First Alternative to Github Copilot, Cursor, and More
 
 Minipilot is a **local-first code assistant** that achieves **maximum possible privacy** by ensuring your codebase never leaves your machine. Unlike cloud-based alternatives, Minipilot provides intelligent code assistance while maintaining complete data sovereignty.
 
@@ -10,10 +10,10 @@ Minipilot is a **local-first code assistant** that achieves **maximum possible p
 
 ### The Privacy Problem with Existing Solutions
 
-Traditional code assistants like **GitHub Copilot** and **Cursor** require uploading your entire codebase to their servers for processing:
+Traditional code assistants like **Github Copilot** and **Cursor** require uploading your entire codebase to their servers for processing:
 
 - **Cursor's Architecture** (in Privacy Mode): Uploads your full codebase → generates embeddings on their servers → deletes your code but retains embeddings → performs semantic search over the vectorized embeddings → retrieves relevant code chunks and sends to LLM → when session is over, embeddings are deleted
-- **GitHub Copilot**: Not public, but likely similar and certainly requires a fully upload of codebase to some server, even if temporary, and continuously streams code context to GitHub's servers for real-time suggestions
+- **Github Copilot**: Not public, but likely similar and certainly requires a fully upload of codebase to some server, even if temporary, and continuously streams code context to Github's servers for real-time suggestions
 - **The Upshot - Privacy Risks**: Your intellectual property passes through third-party infrastructure, creating potential security and compliance issues, **regardless of whether or not these providers retain your data**.
 
 ### Minipilot's Zero-Upload Architecture
@@ -29,7 +29,7 @@ Your Machine (Private)          Cloud (Minimal Exposure)
 │ ↓                   │        │  at most)            │
 │ Semantic Search     │        │                      │
 │ ↓                   │        │ LLM Provider         │
-│ Minimal Context     │        │ (OpenAI/Anthropic)   │
+│ Minimal Context     │        │ (OpenAI GPT-4o)      │
 └─────────────────────┘        └──────────────────────┘
 ```
 
@@ -42,11 +42,11 @@ Your Machine (Private)          Cloud (Minimal Exposure)
 
 ### Privacy Comparison
 
-| Solution           | Codebase Upload     | Server-Side Processing | Data Retention                                                       | Privacy Level                                                                                                                     |
-| ------------------ | ------------------- | ---------------------- | -------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
-| **GitHub Copilot** | Yes - Full upload   | Yes - Cloud processing | Only temporarily with privacy policy                                 | Requires user to trust provider                                                                                                   |
-| **Cursor**         | Yes - Full upload   | Yes - Cloud processing | Only temporarily in privacy Mode                                     | Requires user to trust provider                                                                                                   |
-| **Minipilot**      | No - Never uploaded | No - Local only        | No data is EVER in the hands of a third party. Not even temporarily. | The user IS the provider. No third party is ever involved in indexing. User's codebase is NEVER sent to any server for embedding. |
+| Solution           | Codebase Upload     | Server-Side Processing | Data Retention                                                                           | Privacy Level                                                                                                                     |
+| ------------------ | ------------------- | ---------------------- | ---------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| **Github Copilot** | Yes - Full upload   | Yes - Cloud processing | Only temporarily with privacy policy                                                     | Requires user to trust provider                                                                                                   |
+| **Cursor**         | Yes - Full upload   | Yes - Cloud processing | Only temporarily in privacy Mode                                                         | Requires user to trust provider                                                                                                   |
+| **Minipilot**      | No - Never uploaded | No - Local only        | No data is EVER in the hands of a third party until the LLM query. Not even temporarily. | The user IS the provider. No third party is ever involved in indexing. User's codebase is NEVER sent to any server for embedding. |
 
 ## Technical Architecture
 
@@ -76,7 +76,7 @@ Your Machine (Private)          Cloud (Minimal Exposure)
 
 ```bash
 # Clone and setup
-git clone https://github.com/yourusername/minipilot.git
+git clone https://Github.com/yourusername/minipilot.git
 cd minipilot
 pip install -r requirements.txt
 
