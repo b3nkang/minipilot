@@ -164,7 +164,7 @@ HTML_TEMPLATE = '''
         .code-language { background: #333; color: #569cd6; padding: 8px 12px; font-size: 11px; font-weight: bold; border-bottom: 1px solid #3c3c3c; }
         .code-block pre { margin: 0; padding: 12px; background: transparent; color: #d4d4d4; white-space: pre-wrap; line-height: 1.4; }
         .completion h1, .completion h2, .completion h3 { color: #569cd6; margin: 10px 0 5px 0; }
-        .completion strong { color: #dcdcaa; }
+        .completion strong { color: #7ba3d0; }
         .completion em { color: #ce9178; font-style: italic; }
         .completion ol, .completion ul { margin: 10px 0; padding-left: 20px; }
         .completion li { margin: 2px 0; line-height: 1.4; }
@@ -244,22 +244,31 @@ HTML_TEMPLATE = '''
             // Italic text  
             html = html.replace(/\\*(.+?)\\*/g, '<em>$1</em>');
             
+            // Process lists first (before line breaks to avoid <br> inside lists)
             // Numbered lists
-            html = html.replace(/^(\\d+\\. .+)$/gm, '<li>$1</li>');
-            html = html.replace(/((<li>\\d+\\. .+<\\/li>\\s*)+)/g, '<ol>$1</ol>');
-            html = html.replace(/<li>\\d+\\. (.+)<\\/li>/g, '<li>$1</li>');
+            html = html.replace(/^(\\d+\\.)\\s*(.+)$/gm, '<li>$2</li>');
+            html = html.replace(/((<li>.+<\\/li>\\n?)+)/g, function(match) {
+                // Clean up newlines inside the list and wrap with <ol>
+                return '<ol>' + match.replace(/\\n/g, '') + '</ol>';
+            });
             
-            // Bullet points
-            html = html.replace(/^- (.+)$/gm, '<li>$1</li>');
-            html = html.replace(/^\\* (.+)$/gm, '<li>$1</li>');
-            html = html.replace(/((<li>.+<\\/li>\\s*)+)/g, '<ul>$1</ul>');
+            // Bullet points  
+            html = html.replace(/^[-*]\\s*(.+)$/gm, '<li>$1</li>');
+            html = html.replace(/((<li>.+<\\/li>\\n?)+)/g, function(match) {
+                // Only wrap if not already wrapped in ol, and clean up newlines
+                if (!match.includes('<ol>')) {
+                    return '<ul>' + match.replace(/\\n/g, '') + '</ul>';
+                }
+                return match;
+            });
             
             // Inline code
             html = html.replace(/`(.+?)`/g, '<code>$1</code>');
             
-            // Line breaks
+            // Line breaks (but avoid inside lists)
             html = html.replace(/\\n\\n/g, '</p><p>');
-            html = html.replace(/\\n/g, '<br>');
+            // // Only add <br> for single line breaks that are NOT inside lists
+            // html = html.replace(/\\n(?![^<]*<\\/(li|ol|ul)>)/g, '<br>');
             
             // Wrap in paragraphs
             if (html && !html.startsWith('<h') && !html.startsWith('<ol') && !html.startsWith('<ul')) {

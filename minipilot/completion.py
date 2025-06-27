@@ -40,13 +40,11 @@ class CompletionEngine:
         self.query_engine = QueryEngine(cache_dir=cache_dir)
         api_key = api_key or os.getenv('OPENAI_API_KEY')
 
-        print("API KEY STATUS:\n\n\n")
+        print("API KEY STATUS:\n")
         if api_key:
             print(f"Using OpenAI API key from environment variable: {api_key[:4]}... (truncated for security)")
         else:
-            print("No OpenAI API key provided, running in DRY-RUN mode")
-        print("\n\n\nAPI KEY STATUS end")
-              
+            print("No OpenAI API key provided, running in DRY-RUN mode")              
         
         if dry_run or not api_key:
             self.dry_run = True
