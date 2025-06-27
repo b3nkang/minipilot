@@ -157,8 +157,11 @@ HTML_TEMPLATE = '''
 </head>
 <body>
     <div class="container">
-        <div style="display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 8px; font-family: 'Menlo',  'Monaco', 'Liberation Mono', 'Courier New', monospace;">
-            <h1 style="margin-bottom: 0px;">minipilot</h1>
+        <div style="display: flex; flex-direction: column; justify-content: center; align-items: center; gap: -80px; font-family: 'Menlo',  'Monaco', 'Liberation Mono', 'Courier New', monospace;">
+            <div style="display: flex; align-items: center; justify-content: center; gap: 14px; margin-bottom: 0px;">
+                <img src="/static/logo.svg" alt="Minipilot Logo" style="height: 48px; width: 48px; display: block;">
+                <h1 style="">minipilot</h1>
+            </div>
             <h3 style="margin-top: 0px; margin-bottom: 25px">your local, private copilot</h3>
         </div>
         <div class="input-section">
