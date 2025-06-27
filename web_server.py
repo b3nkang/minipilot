@@ -82,6 +82,125 @@ def complete():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
+@app.route('/api/complete_stream', methods=['POST'])
+def complete_stream():
+    try:
+        data = request.json
+        query = data.get('query', '')
+        
+        if not query:
+            return jsonify({'error': 'Query is required'}), 400
+        
+        def generate():
+            import sys
+            import json
+            import time
+            
+            # Progress tracking list
+            progress_messages = []
+            
+            # Custom stdout that captures print statements
+            class StreamingOutput:
+                def __init__(self, original_stdout):
+                    self.original = original_stdout
+                    
+                def write(self, text):
+                    # Write to original stdout (terminal)
+                    self.original.write(text)
+                    
+                    # Also capture for streaming
+                    if text and text.strip():
+                        progress_messages.append(text.strip())
+                        
+                def flush(self):
+                    self.original.flush()
+            
+            # Set up streaming output
+            old_stdout = sys.stdout
+            sys.stdout = StreamingOutput(old_stdout)
+            
+            try:
+                yield "data: " + json.dumps({'type': 'start', 'message': 'Generating completion...'}) + "\n\n"
+                
+                global completion_engine
+                if completion_engine is None:
+                    completion_engine = CompletionEngine(cache_dir=cache_dir, dry_run=False)
+                
+                request_obj = CompletionRequest(
+                    query=query,
+                    max_tokens=data.get('max_tokens', 800),
+                    temperature=data.get('temperature', 0.1),
+                    model=data.get('model', 'gpt-4o')
+                )
+                
+                # Track progress messages count
+                last_message_count = 0
+                
+                # Periodically check for new progress messages
+                import threading
+                completion_result = [None]
+                completion_error = [None]
+                
+                def run_completion():
+                    try:
+                        result = completion_engine.complete(request_obj)
+                        completion_result[0] = result
+                    except Exception as e:
+                        completion_error[0] = e
+                
+                # Start completion in background thread
+                thread = threading.Thread(target=run_completion)
+                thread.start()
+                
+                # Stream progress while completion runs
+                while thread.is_alive():
+                    # Check for new progress messages
+                    if len(progress_messages) > last_message_count:
+                        for i in range(last_message_count, len(progress_messages)):
+                            message = progress_messages[i]
+                            yield "data: " + json.dumps({'type': 'progress', 'message': message}) + "\n\n"
+                        last_message_count = len(progress_messages)
+                    
+                    time.sleep(0.1)  # Small delay to avoid busy waiting
+                
+                # Wait for completion to finish
+                thread.join()
+                
+                # Send any remaining progress messages
+                if len(progress_messages) > last_message_count:
+                    for i in range(last_message_count, len(progress_messages)):
+                        message = progress_messages[i]
+                        yield "data: " + json.dumps({'type': 'progress', 'message': message}) + "\n\n"
+                
+                # Send final result
+                if completion_error[0]:
+                    yield "data: " + json.dumps({'type': 'error', 'error': str(completion_error[0])}) + "\n\n"
+                elif completion_result[0]:
+                    response = completion_result[0]
+                    yield "data: " + json.dumps({
+                        'type': 'complete', 
+                        'completion': response.completion,
+                        'context_length': response.context_length,
+                        'chunks_used': response.chunks_used,
+                        'search_time_ms': response.search_time_ms,
+                        'completion_time_ms': response.completion_time_ms
+                    }) + "\n\n"
+                else:
+                    yield "data: " + json.dumps({'type': 'error', 'error': 'Unknown completion error'}) + "\n\n"
+                
+            except Exception as e:
+                yield "data: " + json.dumps({'type': 'error', 'error': str(e)}) + "\n\n"
+            finally:
+                sys.stdout = old_stdout
+        
+        response = app.response_class(generate(), mimetype='text/event-stream')
+        response.headers['Cache-Control'] = 'no-cache'
+        response.headers['Access-Control-Allow-Origin'] = '*'
+        return response
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
 @app.route('/api/search', methods=['POST'])
 def search():
     try:
@@ -175,6 +294,17 @@ HTML_TEMPLATE = '''
         .file-path { color: #569cd6; font-weight: bold; }
         .similarity { color: #4ec9b0; }
         .loading { color: #ffcc02; }
+        .loading-dots::after {
+            content: '';
+            animation: dots 1.5s steps(4, end) infinite;
+        }
+        @keyframes dots {
+            0% { content: ''; }
+            25% { content: '.'; }
+            50% { content: '..'; }
+            75% { content: '...'; }
+            100% { content: ''; }
+        }
         .error { color: #f44747; }
         .success { color: #4ec9b0; }
         textarea:focus {
@@ -343,7 +473,7 @@ HTML_TEMPLATE = '''
             const responseContent = document.getElementById('responseContent');
             
             responseDiv.style.display = 'block';
-            responseContent.innerHTML = '<div class="loading">Searching...</div>';
+            responseContent.innerHTML = '<div class="loading">Searching<span class="loading-dots"></span></div>';
             
             const result = await makeRequest('search', { query });
             
@@ -373,27 +503,78 @@ HTML_TEMPLATE = '''
             const responseContent = document.getElementById('responseContent');
             
             responseDiv.style.display = 'block';
-            responseContent.innerHTML = '<div class="loading">Generating completion...</div>';
+            responseContent.innerHTML = '<div class="loading">Generating completion<span class="loading-dots"></span></div>';
             
-            const result = await makeRequest('complete', { query });
-            
-            if (result.error) {
-                responseContent.innerHTML = `<div class="error">Error: ${escapeHtml(result.error)}</div>`;
-                return;
+            try {
+                // Create EventSource for streaming
+                const response = await fetch('/api/complete_stream', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ query })
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Failed to start streaming completion');
+                }
+                
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder();
+                
+                let progressHtml = '<div class="loading">Generating completion<span class="loading-dots"></span></div><div class="context-preview" style="max-height: 300px; overflow-y: auto;">';
+                
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+                    
+                    const chunk = decoder.decode(value);
+                    const lines = chunk.split('\\n');
+                    
+                    for (const line of lines) {
+                        if (line.startsWith('data: ')) {
+                            try {
+                                const data = JSON.parse(line.substring(6));
+                                
+                                if (data.type === 'start') {
+                                    progressHtml = '<div class="loading">' + escapeHtml(data.message) + '<span class="loading-dots"></span></div><div class="context-preview" style="max-height: 300px; overflow-y: auto;">';
+                                } else if (data.type === 'progress') {
+                                    progressHtml += escapeHtml(data.message) + '\\n';
+                                    responseContent.innerHTML = progressHtml + '</div>';
+                                    
+                                    // Auto-scroll to bottom
+                                    const preview = responseContent.querySelector('.context-preview');
+                                    if (preview) {
+                                        preview.scrollTop = preview.scrollHeight;
+                                    }
+                                } else if (data.type === 'complete') {
+                                    // Final completion result
+                                    const statsHtml = `
+                                        <div class="stats">
+                                            Completion generated in ${data.completion_time_ms.toFixed(1)}ms | 
+                                            Search: ${data.search_time_ms.toFixed(1)}ms | 
+                                            Chunks: ${data.chunks_used} | 
+                                            Context: ${data.context_length} chars
+                                        </div>
+                                    `;
+                                    
+                                    const formattedCompletion = formatCompletion(data.completion);
+                                    responseContent.innerHTML = statsHtml + formattedCompletion;
+                                    return;
+                                } else if (data.type === 'error') {
+                                    responseContent.innerHTML = `<div class="error">Error: ${escapeHtml(data.error)}</div>`;
+                                    return;
+                                }
+                            } catch (e) {
+                                console.log('Failed to parse SSE data:', line);
+                            }
+                        }
+                    }
+                }
+                
+            } catch (error) {
+                responseContent.innerHTML = `<div class="error">Error: ${escapeHtml(error.message)}</div>`;
             }
-            
-            const statsHtml = `
-                <div class="stats">
-                    Completion generated in ${result.completion_time_ms.toFixed(1)}ms | 
-                    Search: ${result.search_time_ms.toFixed(1)}ms | 
-                    Chunks: ${result.chunks_used} | 
-                    Context: ${result.context_length} chars
-                </div>
-            `;
-            
-            const formattedCompletion = formatCompletion(result.completion);
-            
-            responseContent.innerHTML = statsHtml + formattedCompletion;
         }
 
         async function checkStatus() {
@@ -401,7 +582,7 @@ HTML_TEMPLATE = '''
             const responseContent = document.getElementById('responseContent');
             
             responseDiv.style.display = 'block';
-            responseContent.innerHTML = '<div class="loading">Checking status...</div>';
+            responseContent.innerHTML = '<div class="loading">Checking status<span class="loading-dots"></span></div>';
             
             try {
                 const response = await fetch('/api/status');
