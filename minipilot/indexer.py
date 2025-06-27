@@ -143,6 +143,8 @@ class CodebaseIndexer:
     def full_index(self, show_progress: bool = True) -> Dict:
         print("Starting full codebase indexing...")
         
+        self.cache.store_indexed_root_path(str(self.root_path.resolve()))
+        
         all_files = []
         for file_path in self.root_path.rglob('*'):
             if file_path.is_file() and self.chunker.should_include_file(file_path):
@@ -286,3 +288,35 @@ class CodebaseIndexer:
             'embedding_model': self.embeddings.get_model_info(),
             'merkle_root': self.merkle_detector.get_root_hash()
         }
+    
+    def clear_cache_if_path_changed(self, show_prompt: bool = True) -> bool:
+        cached_path = self.cache.get_indexed_root_path()
+        current_path = str(self.root_path.resolve())
+        
+        if not cached_path:
+            return False
+        
+        if cached_path == current_path:
+            return False
+        
+        cache_stats = self.cache.get_cache_stats()
+        
+        if cache_stats['files'] == 0:
+            return False
+        
+        print(f"\n Codebase path has changed!")
+        print(f"   Previously indexed: {cached_path}")
+        print(f"   Current path: {current_path}")
+        print(f"   Cache contains: {cache_stats['files']} files, {cache_stats['chunks']} chunks")
+        
+        if show_prompt:
+            response = input("\nClear existing cache and reindex? [Y/n]: ").strip().lower()
+            if response in ['n', 'no']:
+                print("Keeping existing cache. Results may be incorrect.")
+                return False
+        
+        print("\n🧹 Clearing existing cache...")
+        self.cache.clear_all_cache()
+        self.vector_db.reset_database()
+        
+        return True

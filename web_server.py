@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import os
+import argparse
 os.environ['TOKENIZERS_PARALLELISM'] = 'false'
 
 from flask import Flask, request, jsonify, render_template_string
@@ -15,11 +16,33 @@ from minipilot.indexer import CodebaseIndexer
 app = Flask(__name__)
 CORS(app)
 
-codebase_path = os.path.expanduser("~/repos/fsab/fullstackatbrown.com/")
+# Global variables to be set by parse_args
+codebase_path = None
 cache_dir = ".minipilot"
 
-if not os.path.exists(codebase_path):
-    codebase_path = "."
+def parse_args():
+    parser = argparse.ArgumentParser(description='Minipilot - Your local, private Copilot')
+    parser.add_argument('codebase_path', nargs='?', 
+                       default=os.path.expanduser("~/repos/fsab/fullstackatbrown.com/"),
+                       help='Path to the codebase to index (default: ~/repos/fsab/fullstackatbrown.com/)')
+    parser.add_argument('--port', '-p', type=int, default=8000,
+                       help='Port to run the web server on (default: 8000)')
+    parser.add_argument('--cache-dir', '-c', default=".minipilot",
+                       help='Directory for cache and vector database (default: .minipilot)')
+    
+    args = parser.parse_args()
+    
+    args.codebase_path = os.path.abspath(os.path.expanduser(args.codebase_path))
+    
+    if not os.path.exists(args.codebase_path):
+        if args.codebase_path == os.path.abspath(os.path.expanduser("~/repos/fsab/fullstackatbrown.com/")):
+            print(f"Default path {args.codebase_path} doesn't exist, using current directory")
+            args.codebase_path = os.path.abspath(".")
+        else:
+            print(f"Error: Specified path '{args.codebase_path}' does not exist")
+            exit(1)
+    
+    return args
 
 @app.route('/')
 def index():
@@ -402,7 +425,36 @@ HTML_TEMPLATE = '''
 '''
 
 if __name__ == '__main__':
+    args = parse_args()
+    
+    codebase_path = args.codebase_path
+    cache_dir = args.cache_dir
+    
     print("Starting Minipilot Web Server...")
     print(f"Codebase path: {codebase_path}")
-    print("Open http://localhost:8000 in your browser")
-    app.run(debug=False, host='0.0.0.0', port=8000)
+    print(f"Cache directory: {cache_dir}")
+    
+    indexer = CodebaseIndexer(root_path=codebase_path, cache_dir=cache_dir)
+    cache_cleared = indexer.clear_cache_if_path_changed(show_prompt=False)
+    
+    cache_stats = indexer.cache.get_cache_stats()
+    if cache_stats['files'] == 0:
+        print("\nNo indexed files found. Starting initial indexing...")
+        print(f"This may take a few minutes for large codebases...")
+        indexer.full_index(show_progress=True)
+        print("Initial indexing complete!")
+    elif cache_cleared:
+        print("\nCache was cleared. Starting fresh indexing...")
+        indexer.full_index(show_progress=True)
+        print("Fresh indexing complete!")
+    else:
+        print("Using existing cache. Starting incremental sync...")
+        sync_stats = indexer.incremental_sync(show_progress=True)
+        if sync_stats['changes_detected']:
+            print("Incremental sync complete!")
+        else:
+            print("No changes detected, cache is up to date!")
+    
+    print(f"\nOpen http://localhost:{args.port} in your browser")
+    
+    app.run(debug=False, host='0.0.0.0', port=args.port)

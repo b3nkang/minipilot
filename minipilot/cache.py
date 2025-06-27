@@ -306,3 +306,82 @@ class LocalCache:
                 'chunks': chunk_count,
                 'embeddings': embedding_count
             }
+    
+    def clear_all_cache(self):
+        """Clear all cached data from the database"""
+        with sqlite3.connect(self.db_path) as conn:
+            cursor = conn.cursor()
+            
+            cursor.execute("SELECT COUNT(*) FROM files")
+            files_before = cursor.fetchone()[0]
+            cursor.execute("SELECT COUNT(*) FROM chunks")
+            chunks_before = cursor.fetchone()[0]
+            cursor.execute("SELECT COUNT(*) FROM embeddings")
+            embeddings_before = cursor.fetchone()[0]
+            
+            print(f"  Clearing cache: {files_before} files, {chunks_before} chunks, {embeddings_before} embeddings")
+            
+            cursor.execute("DELETE FROM embeddings")
+            cursor.execute("DELETE FROM chunks")
+            cursor.execute("DELETE FROM files")
+            cursor.execute("DELETE FROM merkle_state")
+            cursor.execute("DELETE FROM indexer_metadata")
+            
+            conn.commit()
+            
+            print("  Cache cleared successfully")
+    
+    def get_indexed_root_path(self) -> Optional[str]:
+        """Get the root path that was originally indexed by analyzing file paths"""
+        with sqlite3.connect(self.db_path) as conn:
+            cursor = conn.cursor()
+            
+            cursor.execute("""
+                SELECT name FROM sqlite_master 
+                WHERE type='table' AND name='indexer_metadata'
+            """)
+            
+            if cursor.fetchone():
+                cursor.execute("SELECT root_path FROM indexer_metadata WHERE id = 1")
+                result = cursor.fetchone()
+                if result:
+                    return result[0]
+            
+            cursor.execute("SELECT file_path FROM files LIMIT 10")
+            sample_files = [row[0] for row in cursor.fetchall()]
+            
+            if not sample_files:
+                return None
+            
+            absolute_files = [f for f in sample_files if f.startswith('/')]
+            
+            if absolute_files:
+                import os
+                try:
+                    common_prefix = os.path.commonpath(absolute_files)
+                    return common_prefix
+                except:
+                    pass
+            
+            return None
+    
+    def store_indexed_root_path(self, root_path: str):
+        with sqlite3.connect(self.db_path) as conn:
+            cursor = conn.cursor()
+            
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS indexer_metadata (
+                    id INTEGER PRIMARY KEY,
+                    root_path TEXT NOT NULL,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            """)
+            
+            cursor.execute("""
+                INSERT OR REPLACE INTO indexer_metadata 
+                (id, root_path, updated_at)
+                VALUES (1, ?, CURRENT_TIMESTAMP)
+            """, (root_path,))
+            
+            conn.commit()
