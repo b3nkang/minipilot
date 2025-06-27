@@ -117,7 +117,7 @@ class CompletionEngine:
                 
                 api_completion = response.choices[0].message.content
                 total_tokens = response.usage.total_tokens if response.usage else None
-                completion = f"API COMPLETION:\n{api_completion}"
+                completion = api_completion
                 
             except Exception as e:
                 completion = f"Error generating completion: {str(e)}"
@@ -267,7 +267,7 @@ class CompletionEngine:
         )
     
     def _build_system_prompt(self, context: str) -> str:
-        return f"""You are an AI coding assistant, powered by Claude Sonnet 4. You operate in Cursor.
+        return f"""You are an AI coding assistant, powered by OpenAI GPT-4. You operate in Github Copilot.
 
 You are pair programming with a USER to solve their coding task. Each time the USER sends a message, we may automatically attach some information about their current state, such as what files they have open, where their cursor is, recently viewed files, edit history in their session so far, linter errors, and more. This information may or may not be relevant to the coding task, it is up for you to decide.
 
