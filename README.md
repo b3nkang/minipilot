@@ -52,7 +52,7 @@ Your Machine (Private)          Cloud (Minimal Exposure)
 
 Below is a demo of Minipilot running on the repository for Full Stack at Brown's website, which is a static Astro-based site.
 
-https://github.com/user-attachments/assets/c61d9a02-ebd4-447d-8c48-ef4938975cb6
+https://github.com/user-attachments/assets/c8c90b05-4126-4110-b09f-ddaeb2e4fe16
 
 ## Technical Architecture
 
