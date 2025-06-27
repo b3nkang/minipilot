@@ -19,6 +19,7 @@ CORS(app)
 # Global variables to be set by parse_args
 codebase_path = None
 cache_dir = ".minipilot"
+completion_engine = None
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Minipilot - Your local, private Copilot')
@@ -57,8 +58,9 @@ def complete():
         if not query:
             return jsonify({'error': 'Query is required'}), 400
         
-        # init fresh engine for each request
-        engine = CompletionEngine(cache_dir=cache_dir, dry_run=False)
+        global completion_engine
+        if completion_engine is None:
+            completion_engine = CompletionEngine(cache_dir=cache_dir, dry_run=False)
         
         request_obj = CompletionRequest(
             query=query,
@@ -67,7 +69,7 @@ def complete():
             model=data.get('model', 'gpt-4o')
         )
         
-        response = engine.complete(request_obj)
+        response = completion_engine.complete(request_obj)
         
         return jsonify({
             'completion': response.completion,
@@ -89,8 +91,10 @@ def search():
         if not query:
             return jsonify({'error': 'Query is required'}), 400
         
-        engine = CompletionEngine(cache_dir=cache_dir, dry_run=True)
-        response = engine.query_engine.search(query, max_results=10)
+        global completion_engine
+        if completion_engine is None:
+            completion_engine = CompletionEngine(cache_dir=cache_dir, dry_run=False)
+        response = completion_engine.query_engine.search(query, max_results=10)
         
         results = []
         for result in response.results:
@@ -114,8 +118,9 @@ def search():
 @app.route('/api/status')
 def status():
     try:
-        indexer = CodebaseIndexer(root_path=codebase_path, cache_dir=cache_dir)
-        cache_stats = indexer.cache.get_cache_stats()
+        from minipilot.cache import LocalCache
+        cache = LocalCache(db_path=f"{cache_dir}/cache.db")
+        cache_stats = cache.get_cache_stats()
         
         return jsonify({
             'codebase_path': codebase_path,
@@ -158,11 +163,11 @@ HTML_TEMPLATE = '''
         .code-block { background: #1e1e1e; border: 1px solid #3c3c3c; border-radius: 4px; margin: 10px 0; font-family: 'Consolas', 'Monaco', 'Courier New', monospace; font-size: 13px; overflow-x: auto; }
         .code-language { background: #333; color: #569cd6; padding: 8px 12px; font-size: 11px; font-weight: bold; border-bottom: 1px solid #3c3c3c; }
         .code-block pre { margin: 0; padding: 12px; background: transparent; color: #d4d4d4; white-space: pre-wrap; line-height: 1.4; }
-        .completion h1, .completion h2, .completion h3 { color: #569cd6; margin: 15px 0 10px 0; }
+        .completion h1, .completion h2, .completion h3 { color: #569cd6; margin: 10px 0 5px 0; }
         .completion strong { color: #dcdcaa; }
         .completion em { color: #ce9178; font-style: italic; }
         .completion ol, .completion ul { margin: 10px 0; padding-left: 20px; }
-        .completion li { margin: 5px 0; }
+        .completion li { margin: 2px 0; line-height: 1.4; }
         .completion p { margin: 10px 0; line-height: 1.6; }
         .completion code { background: #3c3c3c; color: #f8f8f2; padding: 2px 6px; border-radius: 3px; font-family: 'Consolas', monospace; font-size: 12px; }
         .stats { margin-top: 10px; font-size: 14px; color: #808080; }
@@ -427,6 +432,7 @@ HTML_TEMPLATE = '''
 if __name__ == '__main__':
     args = parse_args()
     
+    # Set global variables
     codebase_path = args.codebase_path
     cache_dir = args.cache_dir
     
@@ -434,6 +440,7 @@ if __name__ == '__main__':
     print(f"Codebase path: {codebase_path}")
     print(f"Cache directory: {cache_dir}")
     
+    # Handle indexing
     indexer = CodebaseIndexer(root_path=codebase_path, cache_dir=cache_dir)
     cache_cleared = indexer.clear_cache_if_path_changed(show_prompt=False)
     
@@ -454,6 +461,10 @@ if __name__ == '__main__':
             print("Incremental sync complete!")
         else:
             print("No changes detected, cache is up to date!")
+    
+    print("Initializing completion engine...")
+    completion_engine = CompletionEngine(cache_dir=cache_dir, dry_run=False)
+    print("Completion engine ready!")
     
     print(f"\nOpen http://localhost:{args.port} in your browser")
     

@@ -96,6 +96,7 @@ def prompt_for_path():
             print("  [q] - Quit")
         else:
             print("\nOptions:")
+            print("  [c] - Use existing cache (may be from unknown path)")
             print("  [Enter path] - Specify codebase path to index")
             print("  [.] - Use current directory")
             print("  [q] - Quit")
@@ -116,6 +117,17 @@ def prompt_for_path():
             
             if response == '.':
                 return os.path.abspath('.')
+            
+            if response.lower() == 'c':
+                from minipilot.cache import LocalCache
+                cache = LocalCache()
+                cached_root = cache.get_indexed_root_path()
+                if cached_root and os.path.exists(cached_root):
+                    print(f"Using cached path: {cached_root}")
+                    return cached_root
+                else:
+                    print("Warning: Could not determine original path. Using current directory with existing cache.")
+                    return os.path.abspath('.')
             
             if response.isdigit() and cached_paths:
                 choice = int(response) - 1

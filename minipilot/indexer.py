@@ -27,6 +27,8 @@ class CodebaseIndexer:
         self.vector_db = VectorDatabase(db_path=str(self.cache_dir / "chroma_db"))
         self.embeddings = LocalEmbeddings()
         
+        self.cache.store_indexed_root_path(str(self.root_path.resolve()))
+        
         self.last_sync_time = None
         self.total_files = 0
         self.processed_files = 0
@@ -142,8 +144,6 @@ class CodebaseIndexer:
     
     def full_index(self, show_progress: bool = True) -> Dict:
         print("Starting full codebase indexing...")
-        
-        self.cache.store_indexed_root_path(str(self.root_path.resolve()))
         
         all_files = []
         for file_path in self.root_path.rglob('*'):
