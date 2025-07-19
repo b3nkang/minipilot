@@ -1,10 +1,28 @@
-# Minipilot: A Maximally Private Copilot
+<table>
+<tr>
+
+<td>
+
+<img width="1300" alt="image" src="https://github.com/user-attachments/assets/a22f265b-56a1-4948-ab8b-d87a5d0a4a25" />
+
+</td>
+
+<td>
+
+**Minipilot** was a project I developed as a solo hacker (competing mostly against teams of 8-10 hackers) in the **2025 Global Microsoft Intern Hackathon** under the _Building Trustworthy and Secure Systems_ theme, ultimately winning the 2nd place award. A huge thanks to the Microsoft Intern Hackathon & Celebration Week team for hosting a great event.
+
+</td>
+
+</tr>
+</table>
+
+# Minipilot: Local, Maximally Private Copilot
 
 <img width="791" alt="image" src="https://Github.com/user-attachments/assets/7c146dc3-dc84-49b6-a658-c5717f22d156" />
 
 ## The Privacy-First Alternative to Github Copilot, Cursor, and More
 
-Minipilot is a **local-first code assistant** that achieves **maximum possible privacy** by ensuring your codebase never leaves your machine. Unlike cloud-based alternatives, Minipilot provides intelligent code assistance while maintaining complete data sovereignty.
+Minipilot is a **local-first code assistant** that achieves **maximum possible privacy** by ensuring your codebase never leaves your machine. Unlike cloud-based alternatives, Minipilot provides intelligent code assistance while maintaining complete data sovereignty. It is the privacy-first alternative to Github Copilot, Cursor, and other AI code assistants.
 
 ## Minipilot's Privacy is Architecturally Unique
 
@@ -33,7 +51,7 @@ Your Machine (Private)          Cloud (Minimal Exposure)
 └─────────────────────┘        └──────────────────────┘
 ```
 
-**Key Architectural Differences:**
+### Key Architectural Differences
 
 1. **Local Processing**: All embeddings, indexing, and semantic search happen on your machine
 2. **Minimal Exposure**: Only query + relevant code chunks (typically <1% of your codebase) reach the LLM
@@ -48,13 +66,13 @@ Your Machine (Private)          Cloud (Minimal Exposure)
 | **Cursor**         | Yes - Full upload   | Yes - Cloud processing | Only temporarily in privacy Mode                                                         | Requires user to trust provider                                                                                                   |
 | **Minipilot**      | No - Never uploaded | No - Local only        | No data is EVER in the hands of a third party until the LLM query. Not even temporarily. | The user IS the provider. No third party is ever involved in indexing. User's codebase is NEVER sent to any server for embedding. |
 
-## Demo on Sample Codebase
+## Demo
 
-Below is a demo of Minipilot running on the repository for Full Stack at Brown's website, which is a static Astro-based site.
+Below is a demo of Minipilot running on the repository for Full Stack at Brown's website, which is a static, Astro-based site.
 
-https://github.com/user-attachments/assets/c8c90b05-4126-4110-b09f-ddaeb2e4fe16
+[Demo viewable here](https://github.com/user-attachments/assets/c8c90b05-4126-4110-b09f-ddaeb2e4fe16)
 
-## Technical Architecture
+## Technical Overview
 
 ### Core Components
 
@@ -72,7 +90,7 @@ https://github.com/user-attachments/assets/c8c90b05-4126-4110-b09f-ddaeb2e4fe16
 4. **Minimal Context**: Sends only your query + relevant chunks to LLM
 5. **Response**: Gets answer back without exposing your full codebase
 
-#### Diagrams of Architecture
+### Architecture
 
 ![Diagram 2](diagrams/2.png)
 ![Diagram 3](diagrams/3.png)
@@ -81,21 +99,23 @@ https://github.com/user-attachments/assets/c8c90b05-4126-4110-b09f-ddaeb2e4fe16
 ## Quick Start
 
 ```bash
-# Clone and setup
+# setup
 git clone https://github.com/b3nkang/minipilot.git
 cd minipilot
 pip install -r requirements.txt
 
-# Add your OpenAI API key
+# add API key
 echo "OPENAI_API_KEY=your_key_here" > .env
 
-# Start the assistant
+# start minipilot
 python start_web.py
 ```
 
 The web interface will open automatically. Your codebase gets indexed locally, and you can start asking questions immediately.
 
-## Use Cases
+## Use Cases, Features, and Architectural Benefits
+
+### Use Cases
 
 - **Enterprise Development**: Keep proprietary code completely private
 - **Security-Sensitive Projects**: Maintain compliance with data governance policies
@@ -103,7 +123,7 @@ The web interface will open automatically. Your codebase gets indexed locally, a
 - **Learning & Exploration**: Understand large codebases without sending everything to the cloud
 - **Code Documentation**: Generate explanations using only relevant context
 
-## Features
+### Features
 
 - **Maximum Privacy**: Your code never leaves your machine
 - **Fast Search**: Sub-second semantic search across large codebases
@@ -113,7 +133,7 @@ The web interface will open automatically. Your codebase gets indexed locally, a
 - **Keyword Boosting**: Enhanced search results with intelligent ranking
 - **Multi-Codebase**: Easy switching between different projects
 
-## Architecture Benefits
+### Architecture Benefits
 
 1. **Compliance-Ready**: No data leaves your infrastructure
 2. **Cost-Effective**: Only pay for actual LLM usage, not storage/processing
@@ -125,4 +145,4 @@ The web interface will open automatically. Your codebase gets indexed locally, a
 
 Minipilot represents a new paradigm: **intelligent code assistance without privacy compromise**. By keeping all processing local and minimizing cloud exposure, it proves that you don't need to sacrifice privacy for powerful AI-driven development tools.
 
-As data privacy becomes increasingly critical in software development, Minipilot's architecture offers a sustainable path forward - one where developers can leverage the power of large language models while maintaining complete control over their intellectual property.
+As data privacy becomes increasingly critical in software development, Minipilot's architecture offers a sustainable path forward - one where developers can leverage the power of large language models while maintaining as much control as possible over their intellectual property.
